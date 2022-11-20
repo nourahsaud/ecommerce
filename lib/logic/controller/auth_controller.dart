@@ -2,6 +2,7 @@ import 'package:ecommerce/utils/theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../routes/routes.dart';
@@ -13,6 +14,9 @@ class AuthController extends GetxController {
   var userAvatar = '';
   FirebaseAuth auth = FirebaseAuth.instance;
   var google = GoogleSignIn();
+
+  var isSignedIn = false;
+  final GetStorage authBox = GetStorage();
 
   void visibility() {
     isVisible = !isVisible;
@@ -32,6 +36,7 @@ class AuthController extends GetxController {
         // userName = name;
         auth.currentUser!.updateDisplayName(name);
       });
+
       update();
       Get.offNamed(Routes.mainScreen);
     } on FirebaseAuthException catch (error) {
@@ -62,6 +67,9 @@ class AuthController extends GetxController {
     try {
       await auth.signInWithEmailAndPassword(email: email, password: password);
       // .then((value) => userName = auth.currentUser!.displayName!);
+
+      isSignedIn = true;
+      authBox.write('auth', isSignedIn);
       update();
       Get.offNamed(Routes.mainScreen);
     } on FirebaseAuthException catch (e) {
@@ -92,15 +100,17 @@ class AuthController extends GetxController {
       final GoogleSignInAccount? googleUser = await google.signIn();
       userName = googleUser!.displayName!;
       userAvatar = googleUser.photoUrl!;
+      isSignedIn = true;
+      authBox.write('auth', isSignedIn);
 
       update();
       Get.offNamed(Routes.mainScreen);
-    } catch (e) {
+    } catch (error) {
       Get.snackbar(
         'Error!',
-        e.toString(),
+        error.toString(),
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: mainColor,
+        backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     }
@@ -132,5 +142,22 @@ class AuthController extends GetxController {
     }
   }
 
-  void signOut() {}
+  void signOut() async {
+    try {
+      await auth.signOut();
+      await google.signOut();
+      userName = '';
+      userAvatar = '';
+      isSignedIn = false;
+      authBox.remove('auth');
+
+      update();
+      Get.offNamed(Routes.welcomeScreen);
+    } catch (e) {
+      Get.snackbar('Error!', e.toString(),
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: mainColor,
+          colorText: Colors.white);
+    }
+  }
 }

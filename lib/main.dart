@@ -1,8 +1,10 @@
 import 'package:ecommerce/routes/routes.dart';
 import 'package:ecommerce/view/screens/welcome_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +25,10 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
         ),
         home: const WelcomeScreen(),
-        initialRoute: AppRoutes.welcome,
+        initialRoute: FirebaseAuth.instance.currentUser != null ||
+                GetStorage().read<bool>('auth') == true
+            ? AppRoutes.main
+            : AppRoutes.welcome,
         getPages: AppRoutes.routes);
   }
 }
